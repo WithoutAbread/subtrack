@@ -1,50 +1,61 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* src/index.css */
 
-/* --- CẤU HÌNH GIAO DIỆN NATIVE --- */
+/* ... giữ lại các phần cơ bản ở trên ... */
 
-:root {
-  /* Hỗ trợ chế độ Sáng/Tối tự động theo hệ thống */
-  color-scheme: light dark;
+/* CARD CHUNG */
+.sub-card {
+  @apply flex items-center justify-between p-4 rounded-2xl mb-3 transition-all;
+  /* Mặc định là nền trắng, trông nhẹ nhàng */
+  @apply bg-white shadow-sm border border-transparent;
 }
 
-body {
-  /* Font chữ chuẩn hệ thống (San Francisco trên iOS, Roboto trên Android) */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  
-  /* Chặn hiệu ứng "kéo cao su" (bouncing) khó chịu trên iOS khi cuộn hết trang */
-  overscroll-behavior-y: none;
-  
-  /* Làm mượt font chữ */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  
-  /* Ngăn người dùng chọn text (bôi đen) lung tung - tạo cảm giác App */
-  -webkit-user-select: none;
-  user-select: none;
-  
-  /* Tắt highlight màu xanh khi tap vào nút trên Mobile */
-  -webkit-tap-highlight-color: transparent;
+/* CARD KHẨN CẤP (Báo động đỏ) */
+/* Khi được thêm class này, nó sẽ nổi bật lên */
+.sub-card.urgent {
+    @apply border-red-500 bg-red-50; /* Viền đỏ, nền hơi hồng nhẹ */
 }
 
-/* Cho phép chọn text ở các ô input để sửa */
-input, textarea {
-  -webkit-user-select: text;
-  user-select: text;
+/* Phần bên trái card */
+.card-left {
+  @apply flex items-center gap-4;
 }
 
-/* Ẩn thanh cuộn nhưng vẫn cho phép cuộn (Clean UI) */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+/* Icon dịch vụ */
+.service-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-sm;
 }
 
-/* Hiệu ứng bấm nút (Active state) mượt mà: Nút sẽ lún xuống nhẹ khi chạm */
-button:active {
-  transform: scale(0.96);
-  transition: transform 0.1s ease;
+/* Tên dịch vụ và badge */
+.service-info h3 {
+  @apply font-semibold text-gray-800 text-lg flex items-center gap-2;
+}
+
+/* BADGE DÙNG THỬ (Sửa lỗi bị đè) */
+/* Nó sẽ nằm gọn gàng bên cạnh tên */
+.trial-badge {
+  @apply text-xs font-bold px-2 py-0.5 rounded-full uppercase;
+  background-color: #FFD700; /* Vàng gold sang trọng */
+  color: #754c00;
+}
+
+/* Dòng phụ (ngày hết hạn) */
+.sub-text {
+  @apply text-sm text-gray-500 mt-0.5 font-medium;
+}
+/* Nếu khẩn cấp, dòng phụ chuyển màu đỏ */
+.urgent .sub-text {
+    @apply text-red-600 font-bold;
+}
+
+/* Phần bên phải (Giá tiền) */
+.card-right {
+  @apply text-right;
+}
+
+.price {
+  @apply font-bold text-gray-900 text-lg;
+}
+/* Nếu khẩn cấp, giá tiền cũng đỏ theo */
+.urgent .price {
+  @apply text-red-600;
 }
