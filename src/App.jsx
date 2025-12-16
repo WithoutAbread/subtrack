@@ -13,7 +13,7 @@ const Icons = {
   Sun: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
   System: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   NoteIndicator: () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
-  TrendUp: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+  Upload: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 };
 
 // --- TRANSLATIONS ---
@@ -52,7 +52,8 @@ const TRANSLATIONS = {
     dueSoon: 'Due soon',
     nextBill: 'Next bill',
     endsSoon: 'Ends soon',
-    save: 'Save Changes'
+    save: 'Save Changes',
+    pickColor: 'Icon Color / Image'
   },
   vi: {
     totalBurn: 'TỔNG CHI TIÊU THÁNG',
@@ -88,7 +89,8 @@ const TRANSLATIONS = {
     dueSoon: 'Sắp hết hạn',
     nextBill: 'Kỳ tới',
     endsSoon: 'Sắp hết',
-    save: 'Lưu thay đổi'
+    save: 'Lưu thay đổi',
+    pickColor: 'Màu Icon / Ảnh'
   }
 };
 
@@ -101,6 +103,12 @@ const PRESETS = [
   { name: 'ChatGPT', price: 490000, color: 'bg-[#10A37F]', text: 'text-white', icon: 'AI' },
   { name: 'Adobe', price: 1350000, color: 'bg-[#31004a]', text: 'text-[#00c8ff]', icon: 'Ae' },
   { name: 'X', price: 250000, color: 'bg-zinc-800', text: 'text-white', icon: 'X' },
+];
+
+const COLORS = [
+  'bg-zinc-800', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 
+  'bg-green-500', 'bg-teal-500', 'bg-blue-500', 'bg-indigo-500', 
+  'bg-purple-500', 'bg-pink-500'
 ];
 
 // --- SEAMLESS TICKER ---
@@ -157,14 +165,39 @@ const VerticalSeamlessTicker = ({ items, t, isDark }) => {
   );
 };
 
+// --- APP ICON COMPONENT (FIXED: rounded-2xl) ---
+const AppIcon = ({ sub, size = 'md' }) => {
+  const sizeClass = size === 'lg' ? 'w-16 h-16 text-3xl' : 'w-12 h-12 text-xl';
+  // Đã sửa 'rounded-[1.2rem]' thành 'rounded-2xl' để form dáng chuẩn đẹp hơn
+  const shapeClass = 'rounded-2xl shadow-sm shrink-0 overflow-hidden flex items-center justify-center';
+  
+  if (sub.image) {
+    return (
+      <div className={`${sizeClass} ${shapeClass} bg-white`}>
+        <img 
+          src={sub.image} 
+          alt={sub.name} 
+          className="w-full h-full object-cover" 
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sizeClass} ${shapeClass} ${sub.color} ${sub.text || 'text-white'} font-bold`}>
+      {sub.icon}
+    </div>
+  );
+};
+
 // --- MAIN COMPONENT ---
 export default function SubTrackPlatinum() {
   const [settings, setSettings] = useState(() => {
     if (typeof window !== 'undefined') {
       const s = localStorage.getItem('subtrack_settings');
-      return s ? JSON.parse(s) : { theme: 'system', lang: 'vi' };
+      return s ? JSON.parse(s) : { theme: 'light', lang: 'vi' };
     }
-    return { theme: 'system', lang: 'vi' };
+    return { theme: 'light', lang: 'vi' };
   });
 
   const [subs, setSubs] = useState(() => {
@@ -181,7 +214,8 @@ export default function SubTrackPlatinum() {
   const [selectedSub, setSelectedSub] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [systemTheme, setSystemTheme] = useState('dark');
-  
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
@@ -228,20 +262,6 @@ export default function SubTrackPlatinum() {
     return Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
   };
 
-  const formatNextBill = (dueDay) => {
-    const date = getNextPaymentDate(dueDay);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const daysLeft = calculateDaysLeft(dueDay);
-    
-    let suffix = '';
-    if (daysLeft === 0) suffix = `(${t('today')})`;
-    else if (daysLeft === 1) suffix = `(${t('tomorrow')})`;
-    else suffix = `(${t('inDays', { days: daysLeft })})`;
-
-    return `${t('nextBill')}: ${day}/${month} ${suffix}`;
-  };
-
   const sortedSubs = useMemo(() => {
     return [...subs].sort((a, b) => {
       const daysLeftA = calculateDaysLeft(a.dueDay);
@@ -254,29 +274,24 @@ export default function SubTrackPlatinum() {
     });
   }, [subs]);
 
-  // --- NEW: GROUPING LOGIC ---
   const groupedSubs = useMemo(() => {
     const groups = { urgent: [], week: [], later: [] };
-    
     sortedSubs.forEach(sub => {
       const days = calculateDaysLeft(sub.dueDay);
       if (days <= 3) groups.urgent.push(sub);
       else if (days <= 7) groups.week.push(sub);
       else groups.later.push(sub);
     });
-    
     return groups;
   }, [sortedSubs]);
 
   const stats = useMemo(() => {
     let total = 0;
     subs.forEach(s => { if (!s.isTrial) total += Number(s.price || 0); });
-    
     const tickerItems = sortedSubs.map(s => ({
       ...s,
       daysLeft: calculateDaysLeft(s.dueDay)
     }));
-
     return { total, tickerItems };
   }, [subs, sortedSubs]);
 
@@ -292,6 +307,17 @@ export default function SubTrackPlatinum() {
   const updateSub = (uid, field, value) => {
     setSubs(prev => prev.map(s => s.uid === uid ? { ...s, [field]: value } : s));
     setSelectedSub(prev => ({ ...prev, [field]: value })); 
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && selectedSub) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateSub(selectedSub.uid, 'image', reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const deleteSub = (uid) => {
@@ -315,13 +341,29 @@ export default function SubTrackPlatinum() {
     groupTitle: isDark ? 'text-zinc-600' : 'text-gray-400',
   };
 
-  // Helper render card (to reuse)
   const renderCard = (sub) => {
     const daysLeft = calculateDaysLeft(sub.dueDay);
-    const isUrgent = daysLeft <= 3;
-    const urgentStyle = isUrgent 
-      ? (isDark ? 'bg-orange-500/5 border-orange-500/30' : 'bg-[#FFF9F5] border-orange-200 shadow-md') 
+    const isUrgent = daysLeft <= 7;
+    const isVeryUrgent = daysLeft <= 3;
+
+    const urgentStyle = isVeryUrgent
+      ? (isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-[#FFF9F5] border-orange-200 shadow-md')
       : `${theme.cardBg} ${theme.cardBorder}`;
+
+    let statusText = '';
+    let statusColor = theme.textSec;
+
+    if (isUrgent) {
+        const dayText = daysLeft === 0 ? t('today') : daysLeft === 1 ? t('tomorrow') : t('inDays', { days: daysLeft });
+        statusText = sub.isTrial ? `${t('ends')} ${dayText}` : `${t('due')} ${dayText}`; 
+        statusColor = 'text-orange-500 font-bold';
+    } else {
+        const date = getNextPaymentDate(sub.dueDay);
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        statusText = `${t('nextBill')}: ${d}/${m}`;
+        statusColor = theme.textSec;
+    }
 
     return (
       <button
@@ -329,25 +371,32 @@ export default function SubTrackPlatinum() {
         onClick={() => { setSelectedSub(sub); setView('detail'); }}
         className={`w-full group flex items-center justify-between p-4 rounded-[1.2rem] border transition-all duration-200 active:scale-[0.98] mb-2 ${urgentStyle}`}
       >
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl ${sub.color} ${sub.text} flex items-center justify-center text-xl font-bold shadow-sm shrink-0`}>
-            {sub.icon}
-          </div>
-          <div className="text-left">
-            <h3 className="text-base font-semibold flex items-center gap-2">
-              {sub.name}
+        <div className="flex items-center gap-4 overflow-hidden">
+          <AppIcon sub={sub} size="md" />
+          
+          <div className="text-left min-w-0 flex-1">
+            <div className="flex items-center flex-wrap gap-2">
+              <h3 className="text-base font-semibold truncate">
+                {sub.name}
+              </h3>
+              {sub.isTrial && (
+                <span className="text-[9px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shrink-0">
+                  {t('trialLabel')}
+                </span>
+              )}
               {sub.note && sub.note.trim() !== '' && (
                  <span className={`${theme.textSec}`} title="Has note"><Icons.NoteIndicator /></span>
               )}
-              {sub.isTrial && <span className="text-[9px] bg-yellow-500 text-black px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">{t('trialLabel')}</span>}
-            </h3>
-            <div className={`text-xs mt-1 flex items-center gap-1.5 ${isUrgent ? 'text-orange-500 font-bold' : theme.textSec}`}>
-               {isUrgent && <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"/>}
-               {sub.isTrial && isUrgent ? t('endsSoon') : formatNextBill(sub.dueDay)}
+            </div>
+            
+            <div className={`text-xs mt-1 flex items-center gap-1.5 ${statusColor}`}>
+               {isVeryUrgent && <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"/>}
+               {statusText}
             </div>
           </div>
         </div>
-        <div className="text-right">
+
+        <div className="text-right shrink-0 pl-2">
            <p className={`text-base font-medium tracking-tight ${sub.isTrial ? `line-through ${theme.textSec}` : ''}`}>{fMoney(sub.price)}</p>
         </div>
       </button>
@@ -373,9 +422,7 @@ export default function SubTrackPlatinum() {
                   <h1 className="text-5xl font-medium tracking-tighter leading-none">{fMoney(stats.total)}</h1>
                   <span className={`text-xl font-light ${theme.textSec}`}>{settings.lang === 'vi' ? 'đ' : ''}</span>
                 </div>
-                {/* [NEW] Trend Indicator - Fake data for UI visual */}
                 <div className={`text-[10px] px-2 py-1 rounded-full flex items-center gap-1 ${isDark ? 'bg-zinc-800 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                   <Icons.TrendUp /> 
                    <span>{t('dailyAvg')}: {fMoney((stats.total / 30).toFixed(0))}</span>
                 </div>
               </div>
@@ -383,7 +430,6 @@ export default function SubTrackPlatinum() {
               <VerticalSeamlessTicker items={stats.tickerItems} t={t} isDark={isDark} />
             </div>
 
-            {/* LIST AREA - WITH GROUPING */}
             <div className="flex-1 px-4 overflow-y-auto pb-40 pt-4">
               {sortedSubs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center mt-20 opacity-40">
@@ -392,7 +438,6 @@ export default function SubTrackPlatinum() {
                 </div>
               ) : (
                 <>
-                  {/* Urgent Group */}
                   {groupedSubs.urgent.length > 0 && (
                     <div className="mb-6 animate-slide-up" style={{animationDelay: '0.1s'}}>
                       <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle} flex items-center gap-2`}>
@@ -403,7 +448,6 @@ export default function SubTrackPlatinum() {
                     </div>
                   )}
 
-                  {/* This Week Group */}
                   {groupedSubs.week.length > 0 && (
                     <div className="mb-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
                       <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle}`}>{t('groupWeek')}</p>
@@ -411,7 +455,6 @@ export default function SubTrackPlatinum() {
                     </div>
                   )}
 
-                  {/* Later Group */}
                   {groupedSubs.later.length > 0 && (
                     <div className="mb-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
                       <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle}`}>{t('groupLater')}</p>
@@ -501,12 +544,46 @@ export default function SubTrackPlatinum() {
             </div>
 
             <div className="px-8 flex-1 overflow-y-auto pb-4">
-              <div className="flex items-center gap-5 mb-10">
-                <div className={`w-16 h-16 rounded-[1.2rem] ${selectedSub.color} ${selectedSub.text} flex items-center justify-center text-3xl font-bold shadow-2xl shrink-0`}>
-                  {selectedSub.icon}
-                </div>
+              <div className="flex items-center gap-5 mb-6">
+                {/* ICON DISPLAY (STATIC PREVIEW) */}
+                <AppIcon sub={selectedSub} size="lg" />
+                
                 <div className="flex-1 min-w-0">
                    <input type="text" value={selectedSub.name} onChange={(e) => updateSub(selectedSub.uid, 'name', e.target.value)} className={`bg-transparent text-2xl font-semibold ${theme.textMain} focus:outline-none w-full border-b border-transparent ${isDark ? 'focus:border-zinc-800' : 'focus:border-gray-200'} pb-1 transition-colors`} />
+                </div>
+              </div>
+
+              {/* COLOR & IMAGE PICKER ROW */}
+              <div className="mb-8">
+                <p className={`text-[10px] font-bold ${theme.textSec} uppercase tracking-widest mb-3`}>{t('pickColor')}</p>
+                <div className="overflow-x-auto pb-2 flex gap-3 items-center">
+                  
+                  {/* Color Dots */}
+                  {COLORS.map(c => (
+                     <button 
+                       key={c}
+                       onClick={() => updateSub(selectedSub.uid, 'color', c)}
+                       className={`w-8 h-8 rounded-full ${c} ${selectedSub.color === c ? 'ring-2 ring-offset-2 ring-current' : ''} shrink-0 transition-all`}
+                     />
+                  ))}
+                  
+                  <div className={`w-px h-6 ${isDark ? 'bg-zinc-800' : 'bg-gray-300'} mx-1`}></div>
+
+                  {/* Upload Button (Small Camera Icon) */}
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-8 h-8 rounded-full border border-dashed flex items-center justify-center shrink-0 transition-all ${isDark ? 'border-zinc-600 text-zinc-400 hover:text-white hover:border-white' : 'border-gray-400 text-gray-500 hover:text-black hover:border-black'}`}
+                    title="Upload Image"
+                  >
+                    <Icons.Upload />
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
                 </div>
               </div>
 
