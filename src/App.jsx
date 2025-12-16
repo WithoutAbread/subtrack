@@ -22,8 +22,7 @@ const TRANSLATIONS = {
     totalBurn: 'Monthly Total',
     dailyAvg: 'Daily avg',
     groupUrgent: 'Attention Needed',
-    groupWeek: 'This Week',
-    groupLater: 'Upcoming',
+    groupLater: 'Upcoming', // Đã xóa groupWeek
     noSubs: 'No subscriptions active',
     tapToAdd: 'Tap + to add subscription',
     today: 'today',
@@ -59,8 +58,7 @@ const TRANSLATIONS = {
     totalBurn: 'TỔNG CHI TIÊU THÁNG',
     dailyAvg: 'Trung bình ngày',
     groupUrgent: 'CẦN CHÚ Ý',
-    groupWeek: 'TUẦN NÀY',
-    groupLater: 'SẮP TỚI',
+    groupLater: 'SẮP TỚI', // Đã xóa groupWeek
     noSubs: 'Chưa có đăng ký nào',
     tapToAdd: 'Bấm + để thêm mới',
     today: 'hôm nay',
@@ -111,65 +109,13 @@ const COLORS = [
   'bg-purple-500', 'bg-pink-500'
 ];
 
-// --- SEAMLESS TICKER ---
-const VerticalSeamlessTicker = ({ items, t, isDark }) => {
-  const [index, setIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(true);
-  const shouldScroll = items.length > 1;
-  const displayItems = shouldScroll ? [...items, items[0]] : items;
+// --- SEAMLESS TICKER REMOVED ---
+// Đã xóa component VerticalSeamlessTicker
 
-  useEffect(() => {
-    if (!shouldScroll) { setIndex(0); return; }
-    const interval = setInterval(() => { setIndex(prev => prev + 1); setIsTransitioning(true); }, 3000);
-    return () => clearInterval(interval);
-  }, [items.length, shouldScroll]);
-
-  useEffect(() => {
-    if (shouldScroll && index === displayItems.length - 1) {
-      const timeout = setTimeout(() => { setIsTransitioning(false); setIndex(0); }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [index, displayItems.length, shouldScroll]);
-
-  return (
-    <div className={`relative h-12 overflow-hidden rounded-xl border flex items-center px-4 ${isDark ? 'bg-zinc-900/60 border-zinc-800' : 'bg-[#FFF4EC] border-orange-100'}`}>
-      {items.length === 0 ? (
-        <div className="flex items-center gap-3 w-full">
-           <div className="w-2 h-2 rounded-full bg-green-500"></div>
-           <p className={`text-sm ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>{t('free')}</p>
-        </div>
-      ) : (
-        <div className="flex-1 relative h-full">
-          <div className="absolute w-full" style={{ transform: `translateY(-${index * 3}rem)`, transition: isTransitioning ? 'transform 0.5s ease-in-out' : 'none' }}>
-            {displayItems.map((item, i) => {
-               let dotColor = isDark ? 'bg-zinc-500' : 'bg-orange-300';
-               if (item.isTrial) dotColor = 'bg-yellow-500';
-               if (item.daysLeft <= 3) dotColor = 'bg-orange-500';
-               return (
-                <div key={`${item.uid}-${i}`} className="h-12 flex items-center gap-3 w-full">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`}></div>
-                  <p className={`text-sm w-full truncate ${isDark ? 'text-zinc-300' : 'text-gray-800 font-medium'}`}>
-                    <span className="font-bold mr-1">{item.name}</span>
-                    {item.isTrial ? t('ends') : t('due')}
-                    <span className={`ml-1 font-bold ${item.daysLeft <= 3 ? 'text-orange-600' : ''}`}>
-                      {item.daysLeft === 0 ? t('today') : item.daysLeft === 1 ? t('tomorrow') : t('inDays', {days: item.daysLeft})}
-                    </span>
-                  </p>
-                </div>
-               );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- APP ICON COMPONENT (FIXED: rounded-2xl) ---
+// --- APP ICON COMPONENT ---
 const AppIcon = ({ sub, size = 'md' }) => {
   const sizeClass = size === 'lg' ? 'w-16 h-16 text-3xl' : 'w-12 h-12 text-xl';
-  // Đã sửa 'rounded-[1.2rem]' thành 'rounded-2xl' để form dáng chuẩn đẹp hơn
-  const shapeClass = 'rounded-2xl shadow-sm shrink-0 overflow-hidden flex items-center justify-center';
+  const shapeClass = 'rounded-[14px] shadow-sm shrink-0 overflow-hidden flex items-center justify-center border border-black/5';
   
   if (sub.image) {
     return (
@@ -274,12 +220,12 @@ export default function SubTrackPlatinum() {
     });
   }, [subs]);
 
+  // [UPDATED] Grouping Logic: Removed 'week', only 'urgent' (<=7 days) and 'later' (>7 days)
   const groupedSubs = useMemo(() => {
-    const groups = { urgent: [], week: [], later: [] };
+    const groups = { urgent: [], later: [] };
     sortedSubs.forEach(sub => {
       const days = calculateDaysLeft(sub.dueDay);
-      if (days <= 3) groups.urgent.push(sub);
-      else if (days <= 7) groups.week.push(sub);
+      if (days <= 7) groups.urgent.push(sub); // Gộp tất cả dưới 7 ngày vào Urgent
       else groups.later.push(sub);
     });
     return groups;
@@ -288,12 +234,8 @@ export default function SubTrackPlatinum() {
   const stats = useMemo(() => {
     let total = 0;
     subs.forEach(s => { if (!s.isTrial) total += Number(s.price || 0); });
-    const tickerItems = sortedSubs.map(s => ({
-      ...s,
-      daysLeft: calculateDaysLeft(s.dueDay)
-    }));
-    return { total, tickerItems };
-  }, [subs, sortedSubs]);
+    return { total };
+  }, [subs]);
 
   const fMoney = (n) => new Intl.NumberFormat(settings.lang === 'vi' ? 'vi-VN' : 'en-US').format(n || 0);
 
@@ -344,11 +286,13 @@ export default function SubTrackPlatinum() {
   const renderCard = (sub) => {
     const daysLeft = calculateDaysLeft(sub.dueDay);
     const isUrgent = daysLeft <= 7;
-    const isVeryUrgent = daysLeft <= 3;
+    const isVeryUrgent = daysLeft <= 3; 
 
-    const urgentStyle = isVeryUrgent
-      ? (isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-[#FFF9F5] border-orange-200 shadow-md')
-      : `${theme.cardBg} ${theme.cardBorder}`;
+    const showFire = isVeryUrgent || sub.isTrial;
+    
+    const urgentStyle = showFire
+      ? (isDark ? 'bg-orange-900/10 border-orange-500/50 relative overflow-hidden' : 'bg-[#FFF9F2] border-orange-200 shadow-sm relative overflow-hidden')
+      : `${theme.cardBg} ${theme.cardBorder} relative`;
 
     let statusText = '';
     let statusColor = theme.textSec;
@@ -371,7 +315,13 @@ export default function SubTrackPlatinum() {
         onClick={() => { setSelectedSub(sub); setView('detail'); }}
         className={`w-full group flex items-center justify-between p-4 rounded-[1.2rem] border transition-all duration-200 active:scale-[0.98] mb-2 ${urgentStyle}`}
       >
-        <div className="flex items-center gap-4 overflow-hidden">
+        {showFire && (
+          <div className="absolute top-0 right-0 p-1.5 opacity-80 animate-pulse">
+            <span className="text-lg">🔥</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 overflow-hidden z-10">
           <AppIcon sub={sub} size="md" />
           
           <div className="text-left min-w-0 flex-1">
@@ -396,7 +346,7 @@ export default function SubTrackPlatinum() {
           </div>
         </div>
 
-        <div className="text-right shrink-0 pl-2">
+        <div className="text-right shrink-0 pl-2 z-10">
            <p className={`text-base font-medium tracking-tight ${sub.isTrial ? `line-through ${theme.textSec}` : ''}`}>{fMoney(sub.price)}</p>
         </div>
       </button>
@@ -410,14 +360,14 @@ export default function SubTrackPlatinum() {
         {/* === HOME === */}
         {view === 'home' && (
           <div className="flex flex-col h-full animate-fade-in relative">
-            <div className={`pt-14 px-6 pb-4 ${theme.headerBg} backdrop-blur-xl z-20 sticky top-0 border-b ${theme.divider}`}>
+            <div className={`pt-14 px-6 pb-6 ${theme.headerBg} backdrop-blur-xl z-20 sticky top-0 border-b ${theme.divider}`}>
               <div className="flex justify-between items-start mb-2">
                 <p className={`${theme.textSec} text-[10px] font-bold tracking-[0.2em] uppercase`}>{t('totalBurn')}</p>
                 <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full ${isDark ? 'hover:bg-zinc-800' : 'hover:bg-gray-200'}`}>
                   <Icons.Settings />
                 </button>
               </div>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3">
                 <div className="flex items-baseline gap-2">
                   <h1 className="text-5xl font-medium tracking-tighter leading-none">{fMoney(stats.total)}</h1>
                   <span className={`text-xl font-light ${theme.textSec}`}>{settings.lang === 'vi' ? 'đ' : ''}</span>
@@ -427,9 +377,10 @@ export default function SubTrackPlatinum() {
                 </div>
               </div>
               
-              <VerticalSeamlessTicker items={stats.tickerItems} t={t} isDark={isDark} />
+              {/* Đã xóa VerticalSeamlessTicker */}
             </div>
 
+            {/* LIST AREA - WITH GROUPING (REMOVED WEEK GROUP) */}
             <div className="flex-1 px-4 overflow-y-auto pb-40 pt-4">
               {sortedSubs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center mt-20 opacity-40">
@@ -438,6 +389,7 @@ export default function SubTrackPlatinum() {
                 </div>
               ) : (
                 <>
+                  {/* Urgent Group (Includes <= 7 days) */}
                   {groupedSubs.urgent.length > 0 && (
                     <div className="mb-6 animate-slide-up" style={{animationDelay: '0.1s'}}>
                       <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle} flex items-center gap-2`}>
@@ -448,13 +400,7 @@ export default function SubTrackPlatinum() {
                     </div>
                   )}
 
-                  {groupedSubs.week.length > 0 && (
-                    <div className="mb-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
-                      <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle}`}>{t('groupWeek')}</p>
-                      {groupedSubs.week.map(renderCard)}
-                    </div>
-                  )}
-
+                  {/* Later Group (> 7 days) */}
                   {groupedSubs.later.length > 0 && (
                     <div className="mb-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
                       <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 pl-1 ${theme.groupTitle}`}>{t('groupLater')}</p>
